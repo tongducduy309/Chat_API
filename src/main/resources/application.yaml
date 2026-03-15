@@ -1,0 +1,11 @@
+spring:
+  application:
+    name: chat
+logging:
+  level:
+    org.springframework.web.socket: DEBUG
+    org.springframework.messaging: DEBUG
+jwt:
+  secret: BxsmVbElz3wP7iqRPIxnLSCuc1xJ890ymIPrvtkheXny6NZtiaWzIHOefrBoKIp5
+  expiration-ms: ${JWT_EXPIRATION_MS:8760}
+  issuer: gener.chat
