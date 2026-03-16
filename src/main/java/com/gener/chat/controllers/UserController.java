@@ -18,9 +18,6 @@ public class UserController {
         return userService.getProfile();
     }
 
-    @GetMapping("search/{value}/phone-or-userCode")
-    ResponseEntity<ResponseObject> getUserByPhoneOrUserCode(@PathVariable String value) throws APIException {
-        return userService.getUserByPhoneOrUserCode(value);
-    }
+
 
 }

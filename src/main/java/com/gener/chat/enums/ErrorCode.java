@@ -11,8 +11,7 @@ import org.springframework.http.HttpStatusCode;
 @Getter
 public enum ErrorCode {
 //    Người dùng
-    PHONE_REQUIRED(100, "Số điện thoại không được để trống", HttpStatus.BAD_REQUEST),
-    PHONE_NOT_EXIST(101, "Số điện thoại không tồn tại", HttpStatus.NOT_FOUND),
+    PHONE_OR_EMAIL_REQUIRED(100, "Không được để trống vui lòng nhập số điện thoại hoặc email", HttpStatus.BAD_REQUEST),
     PASSWORD_INCORRECT(102, "Mật khẩu không chính xác", HttpStatus.UNAUTHORIZED),
     USER_NOT_FOUND(103, "Không tìm thấy người dùng", HttpStatus.NOT_FOUND),
     SENDER_NOT_FOUND(104, "Không tìm thấy người gửi", HttpStatus.NOT_FOUND),
@@ -37,6 +36,52 @@ public enum ErrorCode {
     REPLY_MESSAGE_NOT_FOUND(40412, "Tin nhắn phản hồi không tồn tại", HttpStatus.NOT_FOUND),
     MESSAGE_NOT_FOUND(40430, "Tin nhắn không tồn tại", HttpStatus.NOT_FOUND),
     CALL_NOT_FOUND(40420, "Không tìm thấy cuộc gọi", HttpStatus.NOT_FOUND),
+
+
+    FRIENDSHIP_ALREADY_EXISTS(
+            40920,
+            "Hai người đã là bạn bè",
+            HttpStatus.CONFLICT
+    ),
+
+    FRIEND_REQUEST_ALREADY_SENT(
+            40921,
+            "Yêu cầu kết bạn đã tồn tại",
+            HttpStatus.CONFLICT
+    ),
+
+    FRIEND_REQUEST_NOT_ALLOWED(
+            40020,
+            "Không thể gửi lời mời kết bạn",
+            HttpStatus.BAD_REQUEST
+    ),
+
+    FRIEND_REQUEST_INVALID(
+            40021,
+            "Không thể xử lý yêu cầu kết bạn",
+            HttpStatus.BAD_REQUEST
+    ),
+    SELF_FRIEND_REQUEST(
+            40022,
+            "Không thể gửi lời mời kết bạn cho chính mình",
+            HttpStatus.BAD_REQUEST
+    ),
+    FRIEND_REQUEST_NOT_FOUND(
+            40440,
+            "Không tìm thấy yêu cầu kết bạn",
+            HttpStatus.NOT_FOUND
+    ),
+    USER_ALREADY_BLOCKED(
+            40930,
+            "Người dùng đã bị chặn trước đó",
+            HttpStatus.CONFLICT
+    ),
+    FRIENDSHIP_NOT_FOUND(404, "Không tìm thấy quan hệ bạn bè", HttpStatus.NOT_FOUND),
+    FRIENDSHIP_INVALID(400, "Quan hệ bạn bè không hợp lệ", HttpStatus.BAD_REQUEST),
+
+    // Attendance
+    ATTENDANCE_ALREADY_CHECKED_IN(40920, "Bạn đã điểm danh hôm nay", HttpStatus.CONFLICT),
+    ATTENDANCE_NOT_FOUND(40421, "Chưa có dữ liệu điểm danh", HttpStatus.NOT_FOUND),
     ;
     private int status;
     private String message;
