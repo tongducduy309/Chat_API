@@ -51,8 +51,8 @@ public class AuthService {
 
     @Transactional
     public ResponseEntity<ResponseObject> login(LoginReq req) throws APIException {
-        if (req.getUsername()==null) throw new APIException(ErrorCode.PHONE_OR_EMAIL_REQUIRED);
-        User user = userRepository.findByPhoneOrEmail(req.getUsername()).orElseThrow(()-> new APIException(ErrorCode.USER_NOT_FOUND));
+        if (req.getEmailOrPhone()==null) throw new APIException(ErrorCode.PHONE_OR_EMAIL_REQUIRED);
+        User user = userRepository.findByPhoneOrEmail(req.getEmailOrPhone()).orElseThrow(()-> new APIException(ErrorCode.USER_NOT_FOUND));
         if (!passwordEncoder.matches(req.getPassword(),user.getPasswordHash())) throw new APIException(ErrorCode.PASSWORD_INCORRECT);
 
         TokenRes tokenRes = generateToken(user);

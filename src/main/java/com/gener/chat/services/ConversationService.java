@@ -8,10 +8,7 @@ import com.gener.chat.exception.APIException;
 import com.gener.chat.mapper.ConversationMapper;
 import com.gener.chat.mapper.MessageMapper;
 import com.gener.chat.models.*;
-import com.gener.chat.repositories.ConversationMemberRepository;
-import com.gener.chat.repositories.ConversationRepository;
-import com.gener.chat.repositories.MessageRepository;
-import com.gener.chat.repositories.UserRepository;
+import com.gener.chat.repositories.*;
 import com.gener.chat.ws.dto.ConversationCreatedEvent;
 import com.gener.chat.ws.dto.ReadMessageEvent;
 import com.gener.chat.ws.dto.NameUpdateEvent;
@@ -38,9 +35,10 @@ public class ConversationService {
     private final ConversationMapper conversationMapper;
     private final ConversationResolver conversationResolver;
     private final MessageRepository messageRepository;
+    private final FriendshipRepository friendshipRepository;
 
     @Transactional
-    public ResponseEntity<ResponseObject> createConversation(CreateConversationReq req, Long creatorId) throws APIException {
+    public ResponseEntity<ResponseObject> createConversation(CreateConversationReq req) throws APIException {
 
         if (req.getConversationType()==ConversationType.DIRECT){
             Optional<Conversation> c = conversationRepository.findDirectConversation(req.getMemberIds().getFirst(),req.getMemberIds().getLast());
@@ -49,8 +47,7 @@ public class ConversationService {
             }
         }
 
-        User creator = userRepository.findById(creatorId)
-                .orElseThrow(() -> new APIException(ErrorCode.USER_NOT_FOUND));
+        User creator = userService.getUserFromToken();
 
         Conversation conversation = Conversation.builder()
                 .type(req.getConversationType())
@@ -72,7 +69,7 @@ public class ConversationService {
             member.setNickname(user.getDisplayName());
             member.setAddByUser(creator);
 
-            if (user.getId().equals(creatorId)) {
+            if (user.getId().equals(creator.getId())) {
                 member.setRole(MemberRole.LEADER);
             } else {
                 member.setRole(MemberRole.MEMBER);
@@ -132,25 +129,36 @@ public class ConversationService {
 
         List<ConversationMember> members = memberRepository.findActiveMember(conversationId);
 
-        User user = userService.getUserFromToken();
-        String title = conversationResolver.getTitleConversation(conversationId,conversation, user.getId());
+        User currentUser = userService.getUserFromToken();
+        String title = conversationResolver.getTitleConversation(conversationId,conversation, currentUser.getId());
 
-        List<Message> messages = messageRepository.findVisibleMessages(conversationId,user.getId());
+        List<Message> messages = messageRepository.findVisibleMessages(conversationId,currentUser.getId());
 
-        ConversationMember conversationMember = memberRepository.findByIdConversationIdAndIdUserId(conversationId,user.getId()).orElseThrow(
+        ConversationMember conversationMember = memberRepository.findByIdConversationIdAndIdUserId(conversationId,currentUser.getId()).orElseThrow(
                 ()-> new APIException(ErrorCode.USER_NOT_IN_CONVERSATION)
         );
+
+
         DetailConversationRes detailConversationRes = DetailConversationRes.builder()
                 .avatarUrl(conversation.getAvatarUrl())
                 .title(title)
                 .members(members)
                 .type(conversation.getType())
                 .role(conversationMember.getRole())
-                .messages(messageMapper.toListMessageRes(messages,user.getId()))
+                .messages(messageMapper.toListMessageRes(messages,currentUser.getId()))
                 .creatorId(conversation.getCreatedBy().getId())
-                .build();
+                .targetUserId(null)
+                .friendshipStatus(null)
 
-        if (conversation.getLastMessage()!=null&& !Objects.equals(conversation.getLastMessage().getSender().getId(), user.getId())){
+                .build();
+        if (conversation.getType().equals(ConversationType.DIRECT)){
+            Long targetUserId = members.getFirst().getUser().getId().equals(currentUser.getId())?members.getLast().getUser().getId():members.getFirst().getUser().getId();
+            Friendship friendship = friendshipRepository.findByUsers(currentUser.getId(), targetUserId).orElse(null);
+
+            detailConversationRes.setFriendshipStatus(friendship==null?FriendshipStatus.NONE:friendship.getStatusRes(currentUser.getId()));
+            detailConversationRes.setTargetUserId(targetUserId);
+        }
+        if (conversation.getLastMessage()!=null&& !Objects.equals(conversation.getLastMessage().getSender().getId(), currentUser.getId())){
 
 
             conversationMember.setLastReadMessageId(conversation.getLastMessage().getId());
@@ -267,7 +275,7 @@ public class ConversationService {
                 .conversationType(ConversationType.DIRECT)
                 .memberIds(List.of(userId1,userId2))
                 .build();
-        ResponseEntity<ResponseObject> res = createConversation(conversationReq,userId1);
+        ResponseEntity<ResponseObject> res = createConversation(conversationReq);
         assert res.getBody() != null;
         return (Conversation) res.getBody().getData();
     }

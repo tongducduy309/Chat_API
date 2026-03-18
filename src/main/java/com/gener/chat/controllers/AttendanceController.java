@@ -37,4 +37,12 @@ public class AttendanceController {
     public ResponseEntity<ResponseObject> checkTodayAttendance() throws APIException {
         return attendanceService.checkTodayAttendance();
     }
+
+    @GetMapping("/month")
+    public ResponseEntity<ResponseObject> getMyAttendanceInMonth(
+            @RequestParam int month,
+            @RequestParam int year
+    ) throws APIException {
+        return attendanceService.getMyAttendanceInMonth(month, year);
+    }
 }

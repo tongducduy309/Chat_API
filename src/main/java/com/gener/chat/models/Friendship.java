@@ -36,4 +36,16 @@ public class Friendship extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name="requested_by", nullable=false)
     private User requestedBy;
+
+    public FriendshipStatus getStatusRes(Long currentUserId){
+        if (this.status==FriendshipStatus.PENDING)
+        {
+            return (this.requestedBy.getId().equals(currentUserId)?FriendshipStatus.SENT:FriendshipStatus.RECEIVED);
+        }
+        if (this.status==FriendshipStatus.BLOCKED)
+        {
+            return (this.requestedBy.getId().equals(currentUserId)?FriendshipStatus.BLOCKED:FriendshipStatus.BE_BLOCKED);
+        }
+        return this.getStatus();
+    }
 }

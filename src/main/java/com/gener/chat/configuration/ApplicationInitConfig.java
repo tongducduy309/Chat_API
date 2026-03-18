@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.time.LocalDate;
 import java.util.HashSet;
 
 @Configuration
@@ -28,6 +29,7 @@ public class ApplicationInitConfig {
                         .displayName("Admin")
                         .userCode("00000001")
                         .phone("1234567890")
+                        .hireDate(LocalDate.now())
                         .build();
 
                 User newUser = userRepository.save(user);

@@ -2,5 +2,7 @@ package com.gener.chat.enums;
 
 public enum AttendanceStatus {
     PRESENT,
-    LATE
+    LATE,
+    NOT_CHECKED_IN,
+    ABSENT
 }

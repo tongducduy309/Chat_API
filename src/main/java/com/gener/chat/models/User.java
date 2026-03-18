@@ -5,6 +5,7 @@ import com.gener.chat.enums.UserStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -51,5 +52,8 @@ public class User extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Builder.Default
     private UserStatus status = UserStatus.ACTIVE;
+
+    @Column(name = "hire_date")
+    private LocalDate hireDate;
 
 }

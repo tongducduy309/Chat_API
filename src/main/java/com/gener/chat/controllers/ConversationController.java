@@ -18,10 +18,9 @@ public class ConversationController {
 
     @PostMapping
     public ResponseEntity<ResponseObject> create(
-            @RequestBody CreateConversationReq request,
-            @RequestParam Long creatorId
+            @RequestBody CreateConversationReq request
     ) throws APIException {
-        return conversationService.createConversation(request, creatorId);
+        return conversationService.createConversation(request);
     }
 
     @PutMapping("/{conversationId}/nickname")

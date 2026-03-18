@@ -14,6 +14,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.time.LocalDate;
 import java.util.List;
 
 
@@ -33,6 +34,7 @@ public class database {
                         .email("test@dev.com")
                         .displayName("Tester")
                         .phone("1234567891")
+                        .hireDate(LocalDate.now())
                         .build();
                 userService.createUser(user);
                 log.info("Account Tester Has Been Created");

@@ -10,8 +10,10 @@ import com.gener.chat.models.ResponseObject;
 import com.gener.chat.models.User;
 import com.gener.chat.repositories.FriendshipRepository;
 import com.gener.chat.repositories.UserRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -25,7 +27,9 @@ public class FriendshipService {
     private final FriendshipRepository friendshipRepository;
     private final UserService userService;
     private final UserRepository userRepository;
+    private final ApplicationEventPublisher publisher;
 
+    @Transactional
     public ResponseEntity<ResponseObject> sendFriendRequest(Long peerId) throws APIException {
         User currentUser = userService.getUserFromToken();
 
@@ -40,11 +44,13 @@ public class FriendshipService {
 
         if (existingFriendship.isPresent()) {
             Friendship friendship = existingFriendship.get();
-
             switch (friendship.getStatus()) {
                 case ACCEPTED -> throw new APIException(ErrorCode.FRIENDSHIP_ALREADY_EXISTS);
                 case BLOCKED -> throw new APIException(ErrorCode.FRIEND_REQUEST_NOT_ALLOWED);
                 case PENDING -> throw new APIException(ErrorCode.FRIEND_REQUEST_ALREADY_SENT);
+                case NONE -> {
+                    break;
+                }
 
                 default -> throw new APIException(ErrorCode.FRIEND_REQUEST_INVALID);
             }
@@ -57,17 +63,21 @@ public class FriendshipService {
         friendship.setStatus(FriendshipStatus.PENDING);
         friendship.setRequestedBy(currentUser);
 
+        Friendship friendshipSaved = friendshipRepository.save(friendship);
+
+        publisher.publishEvent(friendship);
 
 
         return ResponseEntity.ok(
                 ResponseObject.builder()
                         .status(SuccessCode.REQUEST.getStatus())
                         .message("Gửi yêu cầu kết bạn thành công")
-                        .data(friendshipRepository.save(friendship))
+                        .data(friendshipSaved)
                         .build()
         );
     }
 
+    @Transactional
     public ResponseEntity<ResponseObject> cancelFriendRequest(Long peerId) throws APIException {
         User currentUser = userService.getUserFromToken();
 
@@ -87,7 +97,8 @@ public class FriendshipService {
         }
 
         friendshipRepository.delete(friendship);
-
+        friendship.setStatus(FriendshipStatus.NONE);
+        publisher.publishEvent(friendship);
         return ResponseEntity.ok(
                 ResponseObject.builder()
                         .status(SuccessCode.REQUEST.getStatus())
@@ -97,6 +108,7 @@ public class FriendshipService {
         );
     }
 
+    @Transactional
     public ResponseEntity<ResponseObject> acceptFriendRequest(Long peerId) throws APIException {
         User currentUser = userService.getUserFromToken();
 
@@ -125,7 +137,7 @@ public class FriendshipService {
 
         friendship.setStatus(FriendshipStatus.ACCEPTED);
         friendshipRepository.save(friendship);
-
+        publisher.publishEvent(friendship);
         return ResponseEntity.ok(
                 ResponseObject.builder()
                         .status(SuccessCode.REQUEST.getStatus())
@@ -135,6 +147,7 @@ public class FriendshipService {
         );
     }
 
+    @Transactional
     public ResponseEntity<ResponseObject> rejectFriendRequest(Long peerId) throws APIException {
         User currentUser = userService.getUserFromToken();
 
@@ -155,7 +168,7 @@ public class FriendshipService {
 
         friendship.setStatus(FriendshipStatus.NONE);
         friendshipRepository.save(friendship);
-
+        publisher.publishEvent(friendship);
         return ResponseEntity.ok(
                 ResponseObject.builder()
                         .status(SuccessCode.REQUEST.getStatus())
@@ -165,6 +178,7 @@ public class FriendshipService {
         );
     }
 
+    @Transactional
     public ResponseEntity<ResponseObject> blockUser(Long peerId) throws APIException {
         User currentUser = userService.getUserFromToken();
 
@@ -193,10 +207,12 @@ public class FriendshipService {
             friendship.setId(new FriendshipId(currentUser.getId(), peer.getId()));
             friendship.setUser(currentUser);
             friendship.setPeer(peer);
+            friendship.setRequestedBy(currentUser);
             friendship.setStatus(FriendshipStatus.BLOCKED);
         }
 
         friendshipRepository.save(friendship);
+        publisher.publishEvent(friendship);
 
         return ResponseEntity.ok(
                 ResponseObject.builder()
@@ -207,6 +223,7 @@ public class FriendshipService {
         );
     }
 
+    @Transactional
     public ResponseEntity<ResponseObject> unfriend(Long peerId) throws APIException {
         User currentUser = userService.getUserFromToken();
 
@@ -225,6 +242,8 @@ public class FriendshipService {
         }
 
         friendshipRepository.delete(friendship);
+        friendship.setStatus(FriendshipStatus.NONE);
+        publisher.publishEvent(friendship);
 
         return ResponseEntity.ok(
                 ResponseObject.builder()
@@ -235,6 +254,7 @@ public class FriendshipService {
         );
     }
 
+    @Transactional
     public ResponseEntity<ResponseObject> unblockUser(Long peerId) throws APIException {
         User currentUser = userService.getUserFromToken();
 
@@ -253,7 +273,8 @@ public class FriendshipService {
         }
 
         friendshipRepository.delete(friendship);
-
+        friendship.setStatus(FriendshipStatus.NONE);
+        publisher.publishEvent(friendship);
         return ResponseEntity.ok(
                 ResponseObject.builder()
                         .status(SuccessCode.REQUEST.getStatus())

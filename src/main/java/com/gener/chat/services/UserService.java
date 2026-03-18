@@ -36,6 +36,7 @@ public class UserService {
                 .userCode(userResolver.generateUserCode())
                 .displayName(req.getDisplayName())
                 .phone(req.getPhone())
+                .hireDate(req.getHireDate())
                 .build();
 
         User newUser = userRepository.save(user);
