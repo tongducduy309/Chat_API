@@ -1,14 +1,18 @@
 package com.gener.chat.services;
 
+import com.gener.chat.dtos.request.FaceSearchCandidate;
 import com.gener.chat.dtos.request.IntrospectReq;
 import com.gener.chat.dtos.request.LoginReq;
+import com.gener.chat.dtos.response.FaceSearchResult;
 import com.gener.chat.dtos.response.LoginRes;
 import com.gener.chat.dtos.response.TokenRes;
 import com.gener.chat.enums.ErrorCode;
 import com.gener.chat.enums.SuccessCode;
 import com.gener.chat.exception.APIException;
+import com.gener.chat.models.FaceProfile;
 import com.gener.chat.models.ResponseObject;
 import com.gener.chat.models.User;
+import com.gener.chat.repositories.FaceProfileRepository;
 import com.gener.chat.repositories.UserRepository;
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.MACSigner;
@@ -24,13 +28,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.springframework.web.multipart.MultipartFile;
+import tools.jackson.databind.ObjectMapper;
 
 import java.text.ParseException;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.Date;
-import java.util.StringJoiner;
+import java.util.*;
 
 @Slf4j
 @Service
@@ -39,6 +44,13 @@ public class AuthService {
     private final UserRepository userRepository;
 
     private final PasswordEncoder passwordEncoder;
+
+    private final FaceClientService faceClientService;
+
+    private final FaceProfileRepository faceProfileRepository;
+
+    private final ObjectMapper objectMapper;
+
 
     @Value("${jwt.secret}")
     private String SIGNER_KEY;
@@ -144,5 +156,58 @@ public class AuthService {
 //            user.getRoles().forEach(stringJoiner::add);
 //        }
         return stringJoiner.toString();
+    }
+
+    @Transactional
+    public ResponseEntity<ResponseObject> faceLogin(MultipartFile file) throws APIException {
+        List<FaceProfile> profiles = faceProfileRepository.findAllByRegisteredTrue();
+
+        if (profiles.isEmpty()) {
+            throw new APIException(ErrorCode.FACE_LOGIN_FAILED);
+        }
+
+        List<FaceSearchCandidate> candidates = profiles.stream()
+                .map(profile -> FaceSearchCandidate.builder()
+                        .userId(profile.getUser().getId())
+                        .embedding(readEmbedding(profile.getEmbedding()))
+                        .build())
+                .toList();
+
+        FaceSearchResult searchResult = faceClientService.searchFace(file, candidates);
+
+        if (!Boolean.TRUE.equals(searchResult.getMatched()) || searchResult.getUserId() == null) {
+            throw new APIException(ErrorCode.FACE_LOGIN_FAILED);
+        }
+
+        User user = userRepository.findById(searchResult.getUserId())
+                .orElseThrow(() -> new APIException(ErrorCode.USER_NOT_FOUND));
+
+        // thay bằng logic generate token hiện có của bạn
+        String accessToken = generateToken(user).getAccessToken();
+//        String refreshToken = jwtService.generateRefreshToken(user);
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("user", user);
+        data.put("accessToken", accessToken);
+//        data.put("refreshToken", refreshToken);
+
+        return ResponseEntity.ok(
+                ResponseObject.builder()
+                        .status(200)
+                        .message("Đăng nhập bằng khuôn mặt thành công")
+                        .data(data)
+                        .build()
+        );
+    }
+
+    private List<Double> readEmbedding(String embeddingJson) {
+        try {
+            return objectMapper.readValue(
+                    embeddingJson,
+                    objectMapper.getTypeFactory().constructCollectionType(List.class, Double.class)
+            );
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }

@@ -26,6 +26,7 @@ public enum ErrorCode {
     TOKEN_EXPIRED(40102, "Token đã hết hạn", HttpStatus.UNAUTHORIZED),
     UNAUTHENTICATED(40103, "Chưa xác thực", HttpStatus.UNAUTHORIZED),
     ACCESS_DENIED(40300, "Bạn không có quyền truy cập", HttpStatus.FORBIDDEN),
+    FACE_LOGIN_FAILED(40150, "Đăng nhập bằng khuôn mặt thất bại", HttpStatus.UNAUTHORIZED),
 
     // ==================== CONVERSATION ====================
     CONVERSATION_NOT_FOUND(40420, "Không tìm thấy cuộc trò chuyện", HttpStatus.NOT_FOUND),
@@ -55,7 +56,13 @@ public enum ErrorCode {
 
     // ==================== ATTENDANCE ====================
     ATTENDANCE_ALREADY_CHECKED_IN(40950, "Bạn đã điểm danh hôm nay", HttpStatus.CONFLICT),
-    ATTENDANCE_NOT_FOUND(40450, "Chưa có dữ liệu điểm danh", HttpStatus.NOT_FOUND);
+    ATTENDANCE_NOT_FOUND(40450, "Chưa có dữ liệu điểm danh", HttpStatus.NOT_FOUND),
+
+
+    FACE_NOT_REGISTERED(40440, "Người dùng chưa đăng ký khuôn mặt", HttpStatus.NOT_FOUND),
+    FACE_NOT_MATCHED(40041, "Khuôn mặt không khớp", HttpStatus.BAD_REQUEST),
+    FACE_SERVICE_ERROR(50042, "Không thể kết nối dịch vụ khuôn mặt", HttpStatus.INTERNAL_SERVER_ERROR),
+    ;
 
     private int status;
     private String message;

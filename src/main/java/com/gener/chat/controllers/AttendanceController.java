@@ -5,8 +5,10 @@ import com.gener.chat.exception.APIException;
 import com.gener.chat.models.ResponseObject;
 import com.gener.chat.services.AttendanceService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/v1/attendance")
@@ -44,5 +46,12 @@ public class AttendanceController {
             @RequestParam int year
     ) throws APIException {
         return attendanceService.getMyAttendanceInMonth(month, year);
+    }
+
+    @PostMapping(value = "/face-check-in", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ResponseObject> faceCheckIn(
+            @RequestPart("file") MultipartFile file
+    ) throws APIException {
+        return attendanceService.faceCheckIn(file);
     }
 }
