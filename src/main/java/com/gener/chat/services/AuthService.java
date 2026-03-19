@@ -182,7 +182,6 @@ public class AuthService {
         User user = userRepository.findById(searchResult.getUserId())
                 .orElseThrow(() -> new APIException(ErrorCode.USER_NOT_FOUND));
 
-        // thay bằng logic generate token hiện có của bạn
         String accessToken = generateToken(user).getAccessToken();
 //        String refreshToken = jwtService.generateRefreshToken(user);
 

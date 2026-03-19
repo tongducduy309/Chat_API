@@ -26,7 +26,7 @@ public class SecurityConfig {
     private String SIGNER_KEY;
 
 
-    private final String[] PUBLIC_ENDPOINT_POST = {"/api/v1/auth/login","/api/v1/auth/introspect"};
+    private final String[] PUBLIC_ENDPOINT_POST = {"/api/v1/auth/login","/api/v1/auth/introspect","/api/v1/auth/face-login"};
     private final String[] PUBLIC_ENDPOINT_GET = {"/api/v1/auth/me"};
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {

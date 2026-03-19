@@ -20,4 +20,10 @@ public class APIException extends Exception{
         this.httpStatusCode = errorCode.getHttpStatusCode();
 
     }
+
+//    public APIException(int status,String message,HttpStatusCode httpStatusCode){
+//        this.status = status;
+//        this.message = message;
+//        this.httpStatusCode = httpStatusCode;
+//    }
 }

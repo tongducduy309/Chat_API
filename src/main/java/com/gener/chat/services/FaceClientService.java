@@ -15,8 +15,10 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
+import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import java.util.List;
@@ -77,13 +79,24 @@ public class FaceClientService {
                     new ParameterizedTypeReference<FastApiResponse<FaceVerifyResult>>() {}
             );
 
-            if (!response.getStatusCode().is2xxSuccessful()
-                    || response.getBody() == null
-                    || response.getBody().getData() == null) {
+            FastApiResponse<FaceVerifyResult> responseBody = response.getBody();
+
+            if (!response.getStatusCode().is2xxSuccessful() || responseBody == null) {
                 throw new APIException(ErrorCode.FACE_SERVICE_ERROR);
             }
 
-            return response.getBody().getData();
+            if (Boolean.FALSE.equals(responseBody.getSuccess())) {
+                throw buildFastApiMessageException(responseBody.getMessage());
+            }
+
+            if (responseBody.getData() == null) {
+                throw new APIException(ErrorCode.FACE_SERVICE_ERROR);
+            }
+
+            return responseBody.getData();
+
+        } catch (HttpStatusCodeException e) {
+            throw extractFastApiException(e);
         } catch (APIException e) {
             throw e;
         } catch (Exception e) {
@@ -114,20 +127,49 @@ public class FaceClientService {
                     new ParameterizedTypeReference<FastApiResponse<FaceSearchResult>>() {}
             );
 
-            if (!response.getStatusCode().is2xxSuccessful()
-                    || response.getBody() == null
-                    || response.getBody().getData() == null) {
+            FastApiResponse<FaceSearchResult> responseBody = response.getBody();
+
+            if (!response.getStatusCode().is2xxSuccessful() || responseBody == null) {
                 throw new APIException(ErrorCode.FACE_SERVICE_ERROR);
             }
 
-            return response.getBody().getData();
+            if (Boolean.FALSE.equals(responseBody.getSuccess())) {
+                throw buildFastApiMessageException(responseBody.getMessage());
+            }
+
+            if (responseBody.getData() == null) {
+                throw new APIException(ErrorCode.FACE_SERVICE_ERROR);
+            }
+
+            return responseBody.getData();
+
+        } catch (HttpStatusCodeException e) {
+            throw extractFastApiException(e);
         } catch (APIException e) {
             throw e;
-        } catch (JsonProcessingException e) {
-            throw new APIException(ErrorCode.FACE_SERVICE_ERROR);
         } catch (Exception e) {
             e.printStackTrace();
             throw new APIException(ErrorCode.FACE_SERVICE_ERROR);
+        }
+    }
+
+    private APIException extractFastApiException(HttpStatusCodeException e) {
+        try {
+            String responseBody = e.getResponseBodyAsString();
+
+            FastApiResponse<Object> fastApiResponse = objectMapper.readValue(
+                    responseBody,
+                    new TypeReference<FastApiResponse<Object>>() {}
+            );
+
+            if (fastApiResponse.getMessage() != null && !fastApiResponse.getMessage().isBlank()) {
+                return buildFastApiMessageException(fastApiResponse.getMessage());
+            }
+
+            return new APIException(ErrorCode.FACE_SERVICE_ERROR);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return new APIException(ErrorCode.FACE_SERVICE_ERROR);
         }
     }
 
@@ -164,5 +206,26 @@ public class FaceClientService {
         ));
 
         return new HttpEntity<>(resource, fileHeaders);
+    }
+
+    private APIException buildFastApiMessageException(String message) {
+        if (message == null || message.isBlank()) {
+            return new APIException(ErrorCode.FACE_SERVICE_ERROR);
+        }
+
+        return new APIException(
+                ErrorCode.FACE_SERVICE_ERROR.getStatus(),
+                message,
+                ErrorCode.FACE_SERVICE_ERROR.getHttpStatusCode()
+        );
+    }
+
+
+
+
+    private HttpEntity<String> buildTextPart(String value) {
+        HttpHeaders textHeaders = new HttpHeaders();
+        textHeaders.setContentType(MediaType.TEXT_PLAIN);
+        return new HttpEntity<>(value, textHeaders);
     }
 }

@@ -228,11 +228,12 @@ public class AttendanceService {
     @Transactional
     public ResponseEntity<ResponseObject> faceCheckIn(MultipartFile file) throws APIException {
         User currentUser = userService.getUserFromToken();
-        LocalDate today = LocalDate.now();
+//        LocalDate today = LocalDate.now();
+        String note = "Điểm danh bằng khuôn mặt";
 
-        if (attendanceRepository.existsByUserIdAndWorkDate(currentUser.getId(), today)) {
-            throw new APIException(ErrorCode.ATTENDANCE_ALREADY_CHECKED_IN);
-        }
+//        if (attendanceRepository.existsByUserIdAndWorkDate(currentUser.getId(), today)) {
+//            throw new APIException(ErrorCode.ATTENDANCE_ALREADY_CHECKED_IN);
+//        }
 
         FaceProfile profile = faceProfileRepository.findByUserId(currentUser.getId())
                 .orElseThrow(() -> new APIException(ErrorCode.FACE_NOT_REGISTERED));
@@ -247,20 +248,11 @@ public class AttendanceService {
             throw new APIException(ErrorCode.FACE_NOT_MATCHED);
         }
 
-        LocalDateTime now = LocalDateTime.now();
-        AttendanceStatus status = now.toLocalTime().isAfter(LocalTime.of(8, 0))
-                ? AttendanceStatus.LATE
-                : AttendanceStatus.PRESENT;
-
-        Attendance attendance = Attendance.builder()
-                .user(currentUser)
-                .workDate(today)
-                .checkInAt(now)
-                .status(status)
-                .note("Điểm danh bằng khuôn mặt")
+        AttendanceCheckInReq req = AttendanceCheckInReq.builder()
+                .note(note)
                 .build();
 
-        attendanceRepository.save(attendance);
+        checkIn(req);
 
         return ResponseEntity.ok(
                 ResponseObject.builder()

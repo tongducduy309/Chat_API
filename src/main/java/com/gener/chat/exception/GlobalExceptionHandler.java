@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.client.HttpServerErrorException;
 
 import java.util.Objects;
 
@@ -17,6 +18,16 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(exception.getHttpStatusCode()).body(
                 ResponseObject.builder()
                         .status(exception.getStatus())
+                        .message(exception.getMessage())
+                        .build()
+        );
+    }
+
+    @ExceptionHandler(value= HttpServerErrorException.class)
+    ResponseEntity<ResponseObject> handlingHttpServerErrorException(HttpServerErrorException exception){
+        return ResponseEntity.status(exception.getStatusCode()).body(
+                ResponseObject.builder()
+                        .status(exception.getStatusCode().value())
                         .message(exception.getMessage())
                         .build()
         );
