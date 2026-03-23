@@ -29,6 +29,6 @@ public class Department {
     @Column(length = 255)
     private String description;
 
-    @Column(nullable = false)
-    private Boolean active = true;
+//    @Column(nullable = false)
+//    private Boolean active = true;
 }

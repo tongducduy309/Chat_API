@@ -1,7 +1,6 @@
 package com.gener.chat.controllers;
 
 import com.gener.chat.dtos.request.SendMessageReq;
-import com.gener.chat.dtos.response.DeleteMessageOneSideReq;
 import com.gener.chat.exception.APIException;
 import com.gener.chat.models.ResponseObject;
 import com.gener.chat.services.MessageService;
@@ -27,7 +26,7 @@ public class MessageController {
         return messageService.getMessage(conversationId);
     }
 
-    @DeleteMapping("/messages/{messageId}/delete-for-me")
+    @DeleteMapping("/message/{messageId}/delete-for-me")
     public ResponseEntity<ResponseObject> deleteForMe(@PathVariable Long messageId) throws APIException {
         return messageService.deleteForMe(messageId);
     }

@@ -27,8 +27,6 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
-@DiscriminatorColumn(name = "message_kind")
 public class Message extends BaseEntity {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -71,6 +69,10 @@ public class Message extends BaseEntity {
 
     @JsonFormat(pattern = "dd/MM/yyyy HH:mm:ss")
     private LocalDateTime deletedAt;
+
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "call_id", unique = true)
+    private Call call;
 
     @PrePersist
     public void prePersist() { if (createdAt==null) this.createdAt = LocalDateTime.now(); }

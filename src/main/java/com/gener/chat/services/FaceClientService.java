@@ -44,13 +44,24 @@ public class FaceClientService {
                     new ParameterizedTypeReference<FastApiResponse<ExtractFaceResult>>() {}
             );
 
-            if (!response.getStatusCode().is2xxSuccessful()
-                    || response.getBody() == null
-                    || response.getBody().getData() == null) {
+            FastApiResponse<ExtractFaceResult> responseBody = response.getBody();
+
+            if (!response.getStatusCode().is2xxSuccessful() || responseBody == null) {
                 throw new APIException(ErrorCode.FACE_SERVICE_ERROR);
             }
 
-            return response.getBody().getData();
+            if (Boolean.FALSE.equals(responseBody.getSuccess())) {
+                throw buildFastApiMessageException(responseBody.getMessage());
+            }
+
+            if (responseBody.getData() == null) {
+                throw new APIException(ErrorCode.FACE_SERVICE_ERROR);
+            }
+
+            return responseBody.getData();
+
+        } catch (HttpStatusCodeException e) {
+            throw extractFastApiException(e);
         } catch (APIException e) {
             throw e;
         } catch (Exception e) {

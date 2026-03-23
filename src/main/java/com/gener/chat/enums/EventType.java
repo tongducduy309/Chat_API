@@ -6,3 +6,4 @@ public enum EventType {
     MEMBER_REMOVED,
     GROUP_RENAMED
 }
+

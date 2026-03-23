@@ -1,14 +1,17 @@
 package com.gener.chat.services;
 
 import com.gener.chat.dtos.request.CreateUserReq;
+import com.gener.chat.dtos.response.UserRes;
 import com.gener.chat.dtos.response.UserSearchRes;
 import com.gener.chat.enums.ErrorCode;
 import com.gener.chat.enums.FriendshipStatus;
 import com.gener.chat.enums.SuccessCode;
 import com.gener.chat.exception.APIException;
+import com.gener.chat.mapper.UserMapper;
 import com.gener.chat.models.Friendship;
 import com.gener.chat.models.ResponseObject;
 import com.gener.chat.models.User;
+import com.gener.chat.repositories.FaceProfileRepository;
 import com.gener.chat.repositories.FriendshipRepository;
 import com.gener.chat.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +31,8 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final UserResolver userResolver;
     private final FriendshipRepository friendshipRepository;
+    private final UserMapper userMapper;
+    private final FaceProfileRepository faceProfileRepository;
 
     public ResponseEntity<ResponseObject> createUser(CreateUserReq req){
         User user = User.builder()
@@ -51,11 +56,15 @@ public class UserService {
     }
 
     public ResponseEntity<ResponseObject> getProfile() throws APIException {
+        User user = getUserFromToken();
+        UserRes userRes = userMapper.toUserRes(user);
+        boolean registered = faceProfileRepository.existsByUserIdAndRegisteredTrue(user.getId());
+        userRes.setVerified(registered);
         return ResponseEntity.status(200).body(
                 ResponseObject.builder()
                         .status(200)
                         .message("Thông tin người dùng")
-                        .data(getUserFromToken())
+                        .data(userRes)
                         .build()
         );
     }

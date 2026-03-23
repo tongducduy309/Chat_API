@@ -56,4 +56,7 @@ public class User extends BaseEntity {
     @Column(name = "hire_date")
     private LocalDate hireDate;
 
+    @Column(name = "last_seen_at")
+    private LocalDateTime lastSeenAt;
+
 }

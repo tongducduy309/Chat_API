@@ -62,4 +62,14 @@ public class ConversationController {
     public ResponseEntity<ResponseObject> searchConversationsByUserId(@RequestParam String keyword) throws APIException{
         return conversationService.searchConversationsByUserId(keyword);
     }
+
+    @GetMapping("/user/with/{targetUserId}")
+    public ResponseEntity<ResponseObject> getConversationBy2UserId(@PathVariable Long targetUserId) throws APIException {
+        return conversationService.getConversationBy2UserId(targetUserId);
+    }
+
+    @GetMapping("/temp/with/{targetUserId}")
+    public ResponseEntity<ResponseObject> getDetailConversationTemp(@PathVariable Long targetUserId) throws APIException {
+        return conversationService.getDetailConversationTemp(targetUserId);
+    }
 }

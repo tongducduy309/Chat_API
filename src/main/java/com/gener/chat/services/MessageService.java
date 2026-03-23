@@ -48,7 +48,7 @@ public class MessageService {
 
 
         if (req.getConversationId()==null) {
-            conv = conversationService.getConversationTogether(sender.getId(),req.getReceiverId());
+            conv = conversationService.getConversationTogether(sender.getId(),req.getReceiverId(),true);
         }
         else{
             conv = conversationRepo.findByIdForUpdate(req.getConversationId())

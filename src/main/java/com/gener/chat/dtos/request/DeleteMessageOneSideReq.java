@@ -1,4 +1,4 @@
-package com.gener.chat.dtos.response;
+package com.gener.chat.dtos.request;
 
 import lombok.Getter;
 import lombok.Setter;

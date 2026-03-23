@@ -124,6 +124,7 @@ public class ConversationService {
 
     @Transactional
     public ResponseEntity<ResponseObject> getDetailConversationById(Long conversationId) throws APIException {
+
         Conversation conversation = conversationRepository.findById(conversationId)
                 .orElseThrow(() -> new APIException(ErrorCode.CONVERSATION_NOT_FOUND));
 
@@ -167,6 +168,32 @@ public class ConversationService {
             publisher.publishEvent(new ReadMessageEvent(conversation.getLastMessage().getId(),conversationId,conversationMember));
         }
 
+        return ResponseEntity.status(SuccessCode.REQUEST.getHttpStatusCode()).body(
+                ResponseObject.builder()
+                        .status(SuccessCode.REQUEST.getStatus())
+                        .message(SuccessCode.REQUEST.getMessage())
+                        .data(detailConversationRes)
+                        .build()
+        );
+    }
+
+    @Transactional
+    public ResponseEntity<ResponseObject> getDetailConversationTemp(Long targetUserId) throws APIException{
+        User currentUser = userService.getUserFromToken();
+
+        User targetUser = userRepository.findById(targetUserId).orElseThrow(()-> new APIException(ErrorCode.USER_NOT_FOUND));
+        Friendship friendship = friendshipRepository.findByUsers(currentUser.getId(), targetUserId).orElse(null);
+        DetailConversationRes detailConversationRes = DetailConversationRes.builder()
+                .avatarUrl(targetUser.getAvatarUrl())
+                .title(targetUser.getDisplayName())
+                .members(null)
+                .type(ConversationType.DIRECT)
+                .role(null)
+                .messages(List.of())
+                .creatorId(null)
+                .targetUserId(targetUserId)
+                .friendshipStatus(friendship==null?FriendshipStatus.NONE:friendship.getStatusRes(currentUser.getId()))
+                .build();
         return ResponseEntity.status(SuccessCode.REQUEST.getHttpStatusCode()).body(
                 ResponseObject.builder()
                         .status(SuccessCode.REQUEST.getStatus())
@@ -242,6 +269,7 @@ public class ConversationService {
         );
     }
 
+    @Transactional
     public ResponseEntity<ResponseObject> removeUserFromConversation(Long conversationId, Long userId) throws APIException {
 
 
@@ -262,22 +290,41 @@ public class ConversationService {
         );
     }
 
+    @Transactional
+    public ResponseEntity<ResponseObject> getConversationBy2UserId(Long targetUserId) throws APIException {
+        User currentUser = userService.getUserFromToken();
+
+        User targetUser = userRepository.findById(targetUserId).orElseThrow(()-> new APIException(ErrorCode.USER_NOT_FOUND));
+
+        Conversation conversation = getConversationTogether(currentUser.getId(),targetUserId, false);
+
+        return ResponseEntity.status(SuccessCode.REQUEST.getHttpStatusCode()).body(
+                ResponseObject.builder()
+                        .status(SuccessCode.REQUEST.getStatus())
+                        .message(SuccessCode.REQUEST.getMessage())
+                        .data(conversation)
+                        .build()
+        );
+    }
 
 
-
-    public Conversation getConversationTogether(Long userId1, Long userId2) throws APIException {
+    public Conversation getConversationTogether(Long userId1, Long userId2, boolean create) throws APIException {
         Optional<Conversation> conversation = conversationRepository.findDirectConversation(userId1,userId2);
         if (conversation.isPresent()){
             return conversation.get();
         }
 
-        CreateConversationReq conversationReq = CreateConversationReq.builder()
-                .conversationType(ConversationType.DIRECT)
-                .memberIds(List.of(userId1,userId2))
-                .build();
-        ResponseEntity<ResponseObject> res = createConversation(conversationReq);
-        assert res.getBody() != null;
-        return (Conversation) res.getBody().getData();
+        if (create){
+            CreateConversationReq conversationReq = CreateConversationReq.builder()
+                    .conversationType(ConversationType.DIRECT)
+                    .memberIds(List.of(userId1,userId2))
+                    .build();
+            ResponseEntity<ResponseObject> res = createConversation(conversationReq);
+            assert res.getBody() != null;
+            return (Conversation) res.getBody().getData();
+        }
+
+        return null;
     }
 
     public void sendMessage(Long conversationId, String content, MessageType type) throws APIException {

@@ -33,6 +33,9 @@ public class Call {
     @Column(nullable=false, length=20)
     private CallType type = CallType.VOICE;
 
+    @OneToOne(mappedBy = "call", fetch = FetchType.LAZY)
+    private Message message;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable=false, length=20)
     private CallStatus status = CallStatus.RINGING;
