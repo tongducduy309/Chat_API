@@ -55,4 +55,10 @@ public class FriendshipController {
         return userService.getUserByPhoneOrUserCode(value);
     }
 
+    @GetMapping("/contacts")
+    public ResponseEntity<ResponseObject> getContacts() throws APIException {
+        return friendshipService.getMyFriends();
+
+    }
+
 }

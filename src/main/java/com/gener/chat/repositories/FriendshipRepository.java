@@ -36,6 +36,13 @@ public interface FriendshipRepository extends JpaRepository<Friendship, Friendsh
     );
 
     @Query("""
+    SELECT f FROM Friendship f
+    WHERE (f.user.id = :userId OR f.peer.id = :userId)
+    AND f.status = 'ACCEPTED'
+""")
+    List<Friendship> findAcceptedFriends(Long userId);
+
+    @Query("""
         select f
         from Friendship f
         where (f.user.id = :userId and f.peer.id = :peerId)

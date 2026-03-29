@@ -1,5 +1,6 @@
 package com.gener.chat.services;
 
+import com.gener.chat.dtos.response.ContactItemRes;
 import com.gener.chat.enums.ErrorCode;
 import com.gener.chat.enums.FriendshipStatus;
 import com.gener.chat.enums.SuccessCode;
@@ -280,6 +281,38 @@ public class FriendshipService {
                         .status(SuccessCode.REQUEST.getStatus())
                         .message("Bỏ chặn người dùng thành công")
                         .data(null)
+                        .build()
+        );
+    }
+
+    @Transactional
+    public ResponseEntity<ResponseObject> getMyFriends() throws APIException {
+        User currentUser = userService.getUserFromToken();
+
+        List<Friendship> friendships =
+                friendshipRepository.findAcceptedFriends(currentUser.getId());
+
+        List<ContactItemRes> list = friendships.stream().map(f -> {
+            User friend;
+
+            if (f.getUser().getId().equals(currentUser.getId())) {
+                friend = f.getPeer();
+            } else {
+                friend = f.getUser();
+            }
+
+            return ContactItemRes.builder()
+                    .id(friend.getId())
+                    .displayName(friend.getDisplayName())
+                    .avatarUrl(friend.getAvatarUrl())
+                    .build();
+        }).toList();
+
+        return ResponseEntity.ok(
+                ResponseObject.builder()
+                        .status(SuccessCode.REQUEST.getStatus())
+                        .message("Danh sách bạn bè")
+                        .data(list)
                         .build()
         );
     }
